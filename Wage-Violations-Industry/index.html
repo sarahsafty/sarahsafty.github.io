@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Wage Theft by Industry (2017)</title>
+
+
+            <style>
+
+                h2{
+                        text-align: center;
+                        font-family: 'Krub', sans-serif;
+                }
+                svg{
+                margin-left: auto;
+                margin-right: auto;
+                display: block
+                }
+                p{
+                        max-width: 500px;
+                        margin-left: auto;
+                        margin-right: auto;
+                        font-family: 'Krub', sans-serif;
+                }
+
+                #data-source{
+                        margin-right: auto;
+                        margin-left: 0;
+                        font-size: 10px;
+                        margin-top: 10px;
+                        font-family: 'Krub', sans-serif;
+                }
+
+                        .dot {
+                                opacity: 0.5;
+                                fill: grey;
+    }
+
+                        line {
+                                fill: none;
+                                stroke: grey;
+                                stroke-width: 1px;
+                                shape-rendering: crispEdges;
+                        }
+
+    </style>
+
+</head>
+<body>
+        <h2>Wage Theft by Industry (2017)</h2>
+        <div id="chart"></div>
+        <p>Data from the Department of Labor shows that wage theft is a serious problem in the United States that affects workers in many industries. Wage theft can happen in various ways such as employee misclassification, illegal deductions from pay or even not being paid at all. </p>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+var diameter = 500, //max size of the bubbles
+    format   = d3.format(",d"),
+    color    = d3.scaleOrdinal(d3.schemeCategory10);
+    //more color options: https://github.com/d3/d3-scale-chromatic
+
+var bubble = d3.pack()
+    .size([diameter, diameter])
+    .padding(1.5);
+
+var svg = d3.select("body")
+    .append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter)
+    .attr("class", "bubble");
+
+d3.csv("Industry_Violations.csv").then(function(data){
+
+
+    //convert numerical values from strings to numbers
+    data = data.map(function(d){ d.value = +d["Cases"]; return d; });
+
+    //Sets up a hierarchy of data object
+    var root = d3.hierarchy({children:data})
+      .sum(function(d) { return d.value; })
+      .sort(function(a, b) { return b.value - a.value; });
+
+    //Once we have hierarchal data, run bubble generator
+    bubble(root);
+
+    //setup the chart
+    var bubbles = svg.selectAll(".bubble")
+        .data(root.children)
+        .enter();
+
+    //create the bubbles
+    bubbles.append("circle")
+        .attr("class", "circle")
+        .attr("r", function(d){ return d.r; })
+        .attr("cx", function(d){ return d.x; })
+        .attr("cy", function(d){ return d.y; })
+        .style("fill", function(d) { return color(d.value); });
+
+    //format the text for each bubble
+    bubbles.append("text")
+        .attr("x", function(d){ return d.x; })
+        .attr("y", function(d){ return d.y + 5; })
+        .attr("text-anchor", "middle")
+        .text(function(d){ 
+            if(d.r > 30){
+                return d.data["Industry"]; 
+            }
+            return ""; 
+        })
+        .style("fill","white")
+        .style("font-family", "Helvetica Neue, Helvetica, Arial, san-serif")
+        .style("font-size", "12px");
+});
+</script>
+</body>
+</html>
