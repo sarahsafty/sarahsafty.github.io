@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>D3 Map Example</title>
+</head>
+<body>
+
+
+<!--
+<iframe src="index.html" width="300" height="300" scrolling="no" frameborder="0"></iframe>
+-->
+    
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/topojson@3"></script>
+<script>
+
+var svg = d3.select("body")
+    .append("svg")
+    .attr("width", 960)
+    .attr("height", 600);
+
+var projection = d3.geoMercator()
+    //center of your map
+    .center([-118.630051, 34.842267])
+    .scale(9000);//zoom factor
+
+var path = d3.geoPath()
+    .projection(projection);
+
+  
+Promise.all([
+  d3.json("california.topojson"), 
+  d3.csv("wagetheft_zipcode - Pivot Table 1.csv") 
+])
+.then(function(data){
+
+    var my_map = d3.map(); //create the map object
+
+    data[1].forEach(function(d){
+      //use the .set() function to associate results with each precinct
+      d["Zip Code"] = +d["Zip Code"];
+      d["COUNT of Zip Code"] = +d["COUNT of Zip Code"];
+      my_map.set(d["Zip Code"], d["COUNT of Zip Code"]);
+    });
+  
+    var ZipMax   = d3.max(data[1], function(d){ return d["COUNT of Zip Code"]; });
+
+  
+    var colorScale = d3.scaleSequential(d3.interpolateReds)
+      .domain([0, 50]);
+  
+    svg.selectAll("path")
+        .data(topojson.feature(data[0], data[0].objects.california).features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("stroke", "#333")
+        .attr("stroke-width", "0.5")
+        .attr("fill", function(d){ 
+            let zip = my_map.get(d.properties.ZCTA5CE10) || 0;
+            return colorScale(zip);
+        });
+});
+  
+</script>
+</body>
+</html>
