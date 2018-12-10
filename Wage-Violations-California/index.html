@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Wage Theft Violations in California</title>
+</head>
+<body>
+
+<h2> Wage Theft Violations in California </h2>
+    
+        <p>The Department of Labor’s WHISARD database includes the number of wage theft violation cases enforced by the Wage and Hour Division across the nation from as early as 1988 to the present day. From the map below, we can see that wage theft violations that were investigated by the WHD were concentrated in specific zip codes in the state, with parts of LA county and the Central Valley having the highest number of cases. A closer look at LA county, shown in the frame below, shows us that the largest number of cases were concentrated in a small number of zip codes that are home to the fashion and garment industries. </p>
+    
+        <style>
+                h2{
+                        text-align: center;
+                        font-family: 'Krub', sans-serif;
+                        
+                }
+                
+            p{text-align: center;
+             font-family: 'Krub', sans-serif;
+            font-size: 15px}
+                               
+    </style>
+
+
+<iframe src="index3.html" width="300" height="300" scrolling="yes" frameborder="200"></iframe>
+    
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://unpkg.com/topojson@3"></script>
+<script>
+
+var svg = d3.select("body")
+    .append("svg")
+    .attr("width", 960)
+    .attr("height", 600);
+
+var projection = d3.geoMercator()
+    //center of your map
+    .center([-121.814446, 39.310925])
+    .scale(2500);//zoom factor
+
+var path = d3.geoPath()
+    .projection(projection);
+
+  
+Promise.all([
+  d3.json("california.topojson"), 
+  d3.csv("wagetheft_zipcode - Pivot Table 1.csv") 
+])
+.then(function(data){
+
+    var my_map = d3.map(); //create the map object
+
+    data[1].forEach(function(d){
+      //use the .set() function to associate results with each precinct
+      d["Zip Code"] = +d["Zip Code"];
+      d["COUNT of Zip Code"] = +d["COUNT of Zip Code"];
+      my_map.set(d["Zip Code"], d["COUNT of Zip Code"]);
+    });
+  
+    var ZipMax   = d3.max(data[1], function(d){ return d["COUNT of Zip Code"]; });
+
+  
+    var colorScale = d3.scaleSequential(d3.interpolateReds)
+      .domain([0, 50]);
+  
+    svg.selectAll("path")
+        .data(topojson.feature(data[0], data[0].objects.california).features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("stroke", "#333")
+        .attr("stroke-width", "0.5")
+        .attr("fill", function(d){ 
+            let zip = my_map.get(d.properties.ZCTA5CE10) || 0;
+            return colorScale(zip);
+        });
+});
+  
+</script>
+</body>
+</html>
